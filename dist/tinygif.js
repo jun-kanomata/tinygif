@@ -152,7 +152,6 @@ var Tinygif = function () {
           progress: _this.options.renderingProgress,
           complete: complete
         });
-        console.log("recorder", _this.recorder);
 
         var start = Date.now();
         var count = 0;

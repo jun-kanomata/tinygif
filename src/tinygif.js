@@ -49,7 +49,6 @@ export default class Tinygif {
         progress: this.options.renderingProgress,
         complete: complete
       })
-      console.log("recorder", this.recorder)
 
       let start = Date.now()
       let count = 0
