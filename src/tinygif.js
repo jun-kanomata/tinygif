@@ -8,11 +8,16 @@ export default class Tinygif {
       fps: 50,
       seconds: 5,
       frames: null,
+      width: null,
+      height: null,
+      sample: 30,
+      autoStop: true,
       recordingProgress: () => {},
       renderingProgress: () => {},
     }
 
     this.options = Object.assign({}, defaults, options)
+    this.recorder = null
   }
 
   capture(recorder, canvas, context, count) {
@@ -35,40 +40,66 @@ export default class Tinygif {
       let tick = 1000 / this.options.fps
       let delay = tick / 10
 
-      let recorder = new Recorder({
+      this.recorder = new Recorder({
         loop: this.options.loop,
         delay: delay | 0,
         width: canvas.width,
         height: canvas.height,
+        sample: this.options.sample,
         progress: this.options.renderingProgress,
         complete: complete
       })
+      console.log("recorder", this.recorder)
 
       let start = Date.now()
       let count = 0
       let context = canvas.getContext('2d') || canvas.getContext('webgl')
 
-      recorder.start()
+      this.recorder.start()
       this.captureInterval = setInterval(() => {
         let elapsed = Date.now() - start
         try {
-          this.capture(recorder, canvas, context, count)
+          this.capture(this.recorder, canvas, context, count)
         } catch(err) {
           this.done = Date.now()
-          recorder.error(err)
+          this.recorder.error(err)
           if (this.captureInterval) clearInterval(this.captureInterval)
           error(err)
           return
         }
         count++
-        var maxFrames = this.options.frames
-        var maxElapsed = this.options.seconds ? (this.options.seconds * 1000) : null
-        if ((maxFrames && (count >= maxFrames)) || (maxElapsed && (elapsed >= maxElapsed))) {
-          this.done = Date.now()
-          recorder.stop()
-          if (this.captureInterval) clearInterval(this.captureInterval)
+        if (this.options.autoStop) {
+          var maxFrames = this.options.frames
+          var maxElapsed = this.options.seconds ? (this.options.seconds * 1000) : null
+          if ((maxFrames && (count >= maxFrames)) || (maxElapsed && (elapsed >= maxElapsed))) {
+            this.stop().then(resolve).catch(reject)
+            return
+          }
         }
       }, tick)
+    })
+  }
+
+  stop() {
+    return new Promise((resolve, reject) => {
+      if (this.captureInterval) {
+        clearInterval(this.captureInterval)
+        this.captureInterval = null
+      }
+
+      if (this.recorder) {
+
+        this.recorder.stop()
+        this.recorder.complete = (blob) => {
+          resolve(blob)
+        }
+
+        this.recorder.error = (err) => {
+          reject(err)
+        }
+      } else {
+        reject(new Error("Recorder is not initialized"))
+      }
     })
   }
 }

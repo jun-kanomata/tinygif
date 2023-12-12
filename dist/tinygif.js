@@ -7,7 +7,7 @@
 		exports["Tinygif"] = factory();
 	else
 		root["Tinygif"] = factory();
-})(this, function() {
+})(typeof self !== 'undefined' ? self : this, function() {
 return /******/ (function(modules) { // webpackBootstrap
 /******/ 	// The module cache
 /******/ 	var installedModules = {};
@@ -106,11 +106,16 @@ var Tinygif = function () {
       fps: 50,
       seconds: 5,
       frames: null,
+      width: null,
+      height: null,
+      sample: 30,
+      autoStop: true,
       recordingProgress: function recordingProgress() {},
       renderingProgress: function renderingProgress() {}
     };
 
     this.options = Object.assign({}, defaults, options);
+    this.recorder = null;
   }
 
   _createClass(Tinygif, [{
@@ -138,40 +143,69 @@ var Tinygif = function () {
         var tick = 1000 / _this.options.fps;
         var delay = tick / 10;
 
-        var recorder = new _recorder2.default({
+        _this.recorder = new _recorder2.default({
           loop: _this.options.loop,
           delay: delay | 0,
           width: canvas.width,
           height: canvas.height,
+          sample: _this.options.sample,
           progress: _this.options.renderingProgress,
           complete: complete
         });
+        console.log("recorder", _this.recorder);
 
         var start = Date.now();
         var count = 0;
         var context = canvas.getContext('2d') || canvas.getContext('webgl');
 
-        recorder.start();
+        _this.recorder.start();
         _this.captureInterval = setInterval(function () {
           var elapsed = Date.now() - start;
           try {
-            _this.capture(recorder, canvas, context, count);
+            _this.capture(_this.recorder, canvas, context, count);
           } catch (err) {
             _this.done = Date.now();
-            recorder.error(err);
+            _this.recorder.error(err);
             if (_this.captureInterval) clearInterval(_this.captureInterval);
             error(err);
             return;
           }
           count++;
-          var maxFrames = _this.options.frames;
-          var maxElapsed = _this.options.seconds ? _this.options.seconds * 1000 : null;
-          if (maxFrames && count >= maxFrames || maxElapsed && elapsed >= maxElapsed) {
-            _this.done = Date.now();
-            recorder.stop();
-            if (_this.captureInterval) clearInterval(_this.captureInterval);
+          if (_this.options.autoStop) {
+            var maxFrames = _this.options.frames;
+            var maxElapsed = _this.options.seconds ? _this.options.seconds * 1000 : null;
+            if (maxFrames && count >= maxFrames || maxElapsed && elapsed >= maxElapsed) {
+              _this.stop().then(resolve).catch(reject);
+              return;
+            }
           }
         }, tick);
+      });
+    }
+  }, {
+    key: 'stop',
+    value: function stop() {
+      var _this2 = this;
+
+      return new Promise(function (resolve, reject) {
+        if (_this2.captureInterval) {
+          clearInterval(_this2.captureInterval);
+          _this2.captureInterval = null;
+        }
+
+        if (_this2.recorder) {
+
+          _this2.recorder.stop();
+          _this2.recorder.complete = function (blob) {
+            resolve(blob);
+          };
+
+          _this2.recorder.error = function (err) {
+            reject(err);
+          };
+        } else {
+          reject(new Error("Recorder is not initialized"));
+        }
       });
     }
   }]);
