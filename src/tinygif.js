@@ -43,13 +43,12 @@ export default class Tinygif {
       this.recorder = new Recorder({
         loop: this.options.loop,
         delay: delay | 0,
-        width: canvas.width,
-        height: canvas.height,
+        width: this.options.width || canvas.width,
+        height: this.options.height || canvas.height,
         sample: this.options.sample,
         progress: this.options.renderingProgress,
         complete: complete
       })
-
       let start = Date.now()
       let count = 0
       let context = canvas.getContext('2d') || canvas.getContext('webgl')

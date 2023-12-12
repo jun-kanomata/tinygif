@@ -146,13 +146,12 @@ var Tinygif = function () {
         _this.recorder = new _recorder2.default({
           loop: _this.options.loop,
           delay: delay | 0,
-          width: canvas.width,
-          height: canvas.height,
+          width: _this.options.width || canvas.width,
+          height: _this.options.height || canvas.height,
           sample: _this.options.sample,
           progress: _this.options.renderingProgress,
           complete: complete
         });
-
         var start = Date.now();
         var count = 0;
         var context = canvas.getContext('2d') || canvas.getContext('webgl');
@@ -287,7 +286,7 @@ class Recorder {
       data = new Uint8Array(gl.drawingBufferWidth * gl.drawingBufferHeight * 4)
       gl.readPixels(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight, gl.RGBA, gl.UNSIGNED_BYTE, data)
     } else {
-      let imageData = context.getImageData(0, 0, canvas.width, canvas.height)
+      let imageData = context.getImageData(0, 0, this.width, this.height)
       data = imageData.data
 
       // Pre-2013 imageData could be a pixel array, backward-compatabile

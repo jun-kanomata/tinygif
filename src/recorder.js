@@ -63,7 +63,7 @@ export default class Recorder {
       data = new Uint8Array(gl.drawingBufferWidth * gl.drawingBufferHeight * 4)
       gl.readPixels(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight, gl.RGBA, gl.UNSIGNED_BYTE, data)
     } else {
-      let imageData = context.getImageData(0, 0, canvas.width, canvas.height)
+      let imageData = context.getImageData(0, 0, this.width, this.height)
       data = imageData.data
 
       // Pre-2013 imageData could be a pixel array, backward-compatabile
